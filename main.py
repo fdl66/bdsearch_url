@@ -4,11 +4,11 @@
 from pyquery import PyQuery as Pq
 import requests
 import random
-import re
-import urllib2
+import time
 
 
-resource_file="blacklist.txt"
+resource_file="bl.txt"
+result_file="result_tmp.txt"
 search_list = []
 search_result = {}
 
@@ -40,6 +40,7 @@ class BaiduSearchSpider(object):
     def page(self):
         if not self._page:
             r = requests.get(self.url, headers=self.headers)
+            time.sleep(0.01)
             r.encoding = 'utf-8'
             self._page = Pq(r.text)
         return self._page
@@ -52,43 +53,47 @@ class BaiduSearchSpider(object):
     @property
     def originalURLs(self):
         tmpURLs = self.baiduURLs
-        print tmpURLs
+        # print tmpURLs
         originalURLs = []
         for tmpurl in tmpURLs:
-            tmpPage = requests.get(tmpurl[0])
-            # tmpPage.encoding = 'utf-8' #这样不好使，print的时候python报错
-            tmptext = tmpPage.text.encode('utf-8')
-            urlMatch = re.search(r'URL=\'(.*?)\'', tmptext, re.S)
-            if not urlMatch == None:
-                print urlMatch.group(1), "   ", tmpurl[1]
-                originalURLs.append(tmpurl)
-            else:
-                print "---------------"
-                print "No Original URL found!!"
-                print tmpurl[0]
-                print tmpurl[1]
-
+            try:
+                tmpPage = requests.get(tmpurl[0], headers=self.headers,timeout=3)
+                time.sleep(0.01)
+                # print tmpPage.url
+                turl = []
+                turl.append(tmpurl[1])
+                turl.append(tmpPage.url)
+                originalURLs.append(turl)
+            except requests.ConnectionError, e:
+                print e.message
+            except requests.exceptions.ReadTimeout, e:
+                print e.message
         return originalURLs
 
 
-#未完成，得到真实url
-def get_true_url(target_url):
-    response = urllib2.urlopen(target_url)
-    realurl = response.geturl()
-    return realurl
-    print(realurl)
-
 #开始搜索
 def start_search():
+    cnt=0
+    output = open(result_file, 'w')
     for item in search_list:
+        time.sleep(random.random()/100.0)
         bdsearch=BaiduSearchSpider(item)
-        search_result[item]=bdsearch.baiduURLs
+        time.sleep(random.random() / 100.0)
+        search_result[item]=bdsearch.originalURLs
+        cnt += 1
+        time.sleep(random.random() / 100.0)
+        for url in search_result[item]:
+            output.write(url[0] + "\n")
+            output.write(url[1] + "\n")
+
+        print str(cnt)+item+"********over!"
+        time.sleep(random.random()/10.0)
+    output.close()
 
 
 def main():
     get_search_list()
     start_search()
-    print search_result
 
 if __name__=="__main__":
     main()

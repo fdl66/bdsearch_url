@@ -45,21 +45,13 @@ class BaiduSearchSpider(object):
         print tmpURLs
         originalURLs = []
         for tmpurl in tmpURLs:
-            tmpPage = requests.get(tmpurl[0])
-            # tmpPage.encoding = 'utf-8' #这样不好使，print的时候python报错
-            tmptext = tmpPage.text.encode('utf-8')
-            urlMatch = re.search(r'URL=\'(.*?)\'', tmptext, re.S)
-            if not urlMatch == None:
-                print urlMatch.group(1), "   ", tmpurl[1]
-                originalURLs.append(tmpurl)
-            # else:
-            #     print "---------------"
-            #     print "No Original URL found!!"
-            #     print tmpurl[0]
-            #     print tmpurl[1]
-
+            tmpPage = requests.get(tmpurl[0], headers=self.headers)
+            # print tmpPage.url
+            turl=[]
+            turl.append(tmpurl[1])
+            turl.append(tmpPage.url)
+            originalURLs.append(turl)
         return originalURLs
-
 
 searchText = raw_input("搜索内容是：")
 print searchText

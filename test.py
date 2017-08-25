@@ -1,74 +1,225 @@
-# coding=utf8
-import urllib2
-import string
-import urllib
-import re
-import random
-#设置多个user_agents，防止百度限制IP
+#!/usr/bin/python
+#coding=utf-8
+import json
+import sys
+# #
+read_file="result_tmp.txt"
 
-# USER_AGENTS = [ "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; AcooBrowser; .NET CLR 1.1.4322; .NET CLR 2.0.50727)", "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0; Acoo Browser; SLCC1; .NET CLR 2.0.50727; Media Center PC 5.0; .NET CLR 3.0.04506)", "Mozilla/4.0 (compatible; MSIE 7.0; AOL 9.5; AOLBuild 4337.35; Windows NT 5.1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)", "Mozilla/5.0 (Windows; U; MSIE 9.0; Windows NT 9.0; en-US)", "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0; .NET CLR 3.5.30729; .NET CLR 3.0.30729; .NET CLR 2.0.50727; Media Center PC 6.0)", "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0; WOW64; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; .NET CLR 1.0.3705; .NET CLR 1.1.4322)", "Mozilla/4.0 (compatible; MSIE 7.0b; Windows NT 5.2; .NET CLR 1.1.4322; .NET CLR 2.0.50727; InfoPath.2; .NET CLR 3.0.04506.30)", "Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN) AppleWebKit/523.15 (KHTML, like Gecko, Safari/419.3) Arora/0.3 (Change: 287 c9dfb30)", "Mozilla/5.0 (X11; U; Linux; en-US) AppleWebKit/527+ (KHTML, like Gecko, Safari/419.3) Arora/0.6", "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.2pre) Gecko/20070215 K-Ninja/2.1.1", "Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9) Gecko/20080705 Firefox/3.0 Kapiko/3.0", "Mozilla/5.0 (X11; Linux i686; U;) Gecko/20070322 Kazehakase/0.4.5", "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.8) Gecko Fedora/1.9.0.8-1.fc10 Kazehakase/0.5.6", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.56 Safari/535.11", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/535.20 (KHTML, like Gecko) Chrome/19.0.1036.7 Safari/535.20", "Opera/9.80 (Macintosh; Intel Mac OS X 10.6.8; U; fr) Presto/2.9.168 Version/11.52", ]
-# if __name__=="__main__": def process_request(self, request, spider): request.headers["User-Agent"]=random.choice(USER_AGENTS)
+fr=open(read_file,'r')
+data=json.loads(fr.read())
+fr.close()
+# print data
 
-user_agents = ['Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20130406 Firefox/23.0', \
-    'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firefox/18.0', \
-    'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US) AppleWebKit/533+ \
-    (KHTML, like Gecko) Element Browser 5.0', \
-    'IBM WebExplorer /v0.94', 'Galaxy/1.0 [en] (Mac OS X 10.5.6; U; en)', \
-    'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)', \
-    'Opera/9.80 (Windows NT 6.0) Presto/2.12.388 Version/12.14', \
-    'Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) \
-    Version/6.0 Mobile/10A5355d Safari/8536.25', \
-    'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) \
-    Chrome/28.0.1468.0 Safari/537.36', \
-    'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0; Trident/5.0; TheWorld)']
-def baidu_search(keyword,pn):
-    p= {'wd': keyword}
-    res=urllib2.urlopen(("http://www.baidu.com/s?"+urllib.urlencode(p)+"&pn={0}&cl=3&rn=100").format(pn))
-    html=res.read()
-    return html
+site={}
 
-def getList(regex,text):
-    arr = []
-    res = re.findall(regex, text)
-    if res:
-        for r in res:
-            arr.append(r)
-    return arr
-def getMatch(regex,text):
-    res = re.findall(regex, text)
-    if res:
-        return res[0]
-    return ""
-def clearTag(text):
-    p = re.compile(u'<[^>]+>')
-    retval = p.sub("",text)
-    return retval
-def geturl(keyword):
-    for page in range(10):
-        pn=page*100+1
-        html = baidu_search(keyword,pn)
-        content = unicode(html, 'utf-8','ignore')
-        arrList = getList(u"<table.*?class=\"result\".*?>.*?<\/a>", content)
-        for item in arrList:
-            regex = u"<h3.*?class=\"t\".*?><a.*?href=\"(.*?)\".*?>(.*?)<\/a>"
-            link = getMatch(regex,item)
-            url = link[0]
-            #获取标题
-            #title = clearTag(link[1]).encode('utf8')
-            try:
-                domain=urllib2.Request(url)
-                r=random.randint(0,11)
-                domain.add_header('User-agent', user_agents[r])
-                domain.add_header('connection','keep-alive')
-                response=urllib2.urlopen(domain)
-                uri=response.geturl()
-                print uri
-            except:
-                continue
+def get_site_info():
+    cnt = 0
+    for key in data:
+        cnt += 1
+        # print cnt
+        # print str(key)+"\n\n\n"
+        country = data[key]['country']
+        city = data[key]['city']
+        if country not in site:
+            site[country] = {}
+        if city in site[country]:
+            site[country][city] += 1
+        else:
+            site[country][city] = 1
+            # for item in data[key]:
+            # print item
+            # print data[key][item]
 
-if __name__=='__main__':
-    # geturl('python')
-    html = baidu_search("fdl",120)
-    content = unicode(html, 'utf-8', 'ignore')
-    arrList = getList(u"<table.*?class=\"result\".*?>.*?<\/a>", content)
-    print arrList
+    for country in site:
+        print country
+        for city in site[country]:
+            sys.stdout.write("\t")
+            # sys.stdout.write(city)
+            print city,
+            print ":" + str(site[country][city])
+
+def get_domain():
+    for key in data:
+        print data[key]['domain_name']
+
+get_domain()
+
+'''
+RU
+	K :1
+CN
+	guang zhou shi :2
+	ji nan shi :9
+	xia men shi :3
+	shangyu :1
+	haidianqu :1
+	dong guan shi :1
+	Su Zhou Shi :2
+	Hefeishi :9
+	Xiamenshi :17
+	shanghai :5
+	bei jing :12
+	CHONGQING :1
+	shen  shi :2
+	nantongshi :1
+	GZ :1
+	nanjing :1
+	anyangshi :1
+	ZhengZhouShi :1
+	zhou shi :1
+	ningboshi :1
+	ziboshi :1
+	HongKong :2
+	HangZhou :2
+	chao zhou shi :1
+	wlmq :1
+	Cheng Du :1
+	SHEN ZHEN :1
+	Jin Hua :1
+	handan :1
+	Guangzhou :32
+	zhejian :1
+	shenyangshi :1
+	Shi Xia Qu :1
+	Shenzhen :34
+	dongguan :3
+	kunmingshi :1
+	guangzhou :1
+	bei jing shi :7
+	Hangzhou :134
+	KaiPing :2
+	guang zhou :1
+	上海市 :4
+	Guangdong :2
+	guangzhoushi :2
+	weifang :1
+	wu han shi :1
+	Privacy :1
+	shen zhen shi :1
+	quan zhou shi :1
+	shixiaqu :24
+	kaifengshi :1
+	china shanghai :1
+	Dongguan :1
+	chaoyangqu :4
+	Shen Zhen Shi :2
+	wen zhou shi :1
+	NJS :1
+	NINGBO :1
+	ShanTouShi :1
+	yongchengshi :1
+	binzhoushi :1
+	fu ding shi :2
+	FZS :1
+	Shang Hai Shi :1
+	Beijng :1
+	zhu hai shi :1
+	Hengshui :1
+	BEIJING :2
+	ShenChouShi :1
+	shijiazhuang :1
+	Bei Jing Shi :6
+	hai kou shi :3
+	beijing :14
+	beijingshi :9
+	Hu He Hao Te :1
+	chang sha shi :1
+	Shanghai :7
+	he fei shi :4
+	Qin Huang Dao Shi :1
+	Nanjing :7
+	shang hai :6
+	yi chang shi :1
+	shenzhenshi :5
+	BeiJingShi :10
+	pudongxinqu :3
+	沈阳 :2
+	shang hai shi :1
+	Quan Zhou Shi :2
+	Beijing :93
+	zhengzhoushi :1
+	shenzhen :3
+	haerbin :1
+	changchun :1
+	haerbim :1
+	wenzhoushi :1
+	KunMing :1
+	hang zhou shi :14
+	Nanjing, :1
+	Chengdu :1
+	JINAN :1
+	NANJING :1
+	HaiDianQu :1
+	taiyuan :1
+	fu zhou shi :1
+	anshan :1
+HK
+	Wanchai :1
+	Hong Kong :1
+TW
+	taipei :1
+CA
+	Toronto :1
+US
+	BREA :1
+	FREMONT :1
+	Washington :1
+	Scottsdale :2
+	Pleasanton :2
+	New York :2
+	Burlington :3
+	Denver :1
+	San Francisco :1
+	Jacksonville :3
+	KIRKLAND :1
+KR
+	Seoul :2
+PA
+	Panama :1
+	PANAMA :3
+China
+	xiangchengshi :1
+	Chengdu :3
+	Guang Zhou :1
+	HUNAN :1
+	guangzhou :2
+	dongguan :1
+GB
+	LONDON :1
+BS
+	Nassau :5
+None
+	CHENGDU :1
+	None :774
+cn
+	beijing :1
+	Shen Zhen :1
+	Zhengzhou :2
+	Tianjin :1
+	Shanghai :3
+	Hefei :1
+	Jishou Shi :1
+	Ma Lai Xi Ya :1
+	Shenzhen :2
+	Shen ZhenShi :1
+	yu lin :1
+	Guangzhou :3
+	Quanzhou :1
+	bei jing :1
+	Qingdao :3
+	Wenzhou :1
+	qianjiang :1
+	Haikou :1
+	Mian Yang Shi :1
+	Heshan :1
+	wuhan :1
+	Hangzhou :16
+	shen zhen :1
+	Beijing :1
+	Qujing :1
+	Jinan :3
+	Nanjing :1
+	ERDOS :1
+
+Process finished with exit code 0
+'''
